@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
+    <PackageReference Include="NotifyIcon.WinUI" Version="1.1.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZKBiometricService.API\ZKBiometricService.API.csproj" />
+    <ProjectReference Include="..\ZKBiometricService.Core\ZKBiometricService.Core.csproj" />
+    <ProjectReference Include="..\ZKBiometricService.Data\ZKBiometricService.Data.csproj" />
+  </ItemGroup>
+
+</Project>

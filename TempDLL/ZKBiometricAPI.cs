@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ZKBiometricDLL.Models;
 using ZKBiometricDLL.Services;
 
@@ -25,7 +25,7 @@ namespace ZKBiometricDLL
         {
             try
             {
-                var device = JsonConvert.DeserializeObject<DeviceInfo>(deviceJson);
+                var device = JsonSerializer.Deserialize<DeviceInfo>(deviceJson);
                 if (device == null)
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
@@ -42,15 +42,14 @@ namespace ZKBiometricDLL
         {
             try
             {
-                var device = JsonConvert.DeserializeObject<DeviceInfo>(deviceJson);
+                var device = JsonSerializer.Deserialize<DeviceInfo>(deviceJson);
                 if (device == null)
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
                 var start = DateTime.Parse(startTime);
                 var end = DateTime.Parse(endTime);
-
                 var records = _deviceService.GetAttendanceRecordsAsync(device, start, end).Result;
-                var json = JsonConvert.SerializeObject(records);
+                var json = JsonSerializer.Serialize(records);
                 return $"{{\"success\": true, \"records\": {json}}}";
             }
             catch (Exception ex)
@@ -63,12 +62,12 @@ namespace ZKBiometricDLL
         {
             try
             {
-                var device = JsonConvert.DeserializeObject<DeviceInfo>(deviceJson);
+                var device = JsonSerializer.Deserialize<DeviceInfo>(deviceJson);
                 if (device == null)
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
                 var employees = _deviceService.GetEmployeesAsync(device).Result;
-                var json = JsonConvert.SerializeObject(employees);
+                var json = JsonSerializer.Serialize(employees);
                 return $"{{\"success\": true, \"employees\": {json}}}";
             }
             catch (Exception ex)
@@ -81,7 +80,7 @@ namespace ZKBiometricDLL
         {
             try
             {
-                var device = JsonConvert.DeserializeObject<DeviceInfo>(deviceJson);
+                var device = JsonSerializer.Deserialize<DeviceInfo>(deviceJson);
                 if (device == null)
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
@@ -98,7 +97,7 @@ namespace ZKBiometricDLL
         {
             try
             {
-                var device = JsonConvert.DeserializeObject<DeviceInfo>(deviceJson);
+                var device = JsonSerializer.Deserialize<DeviceInfo>(deviceJson);
                 if (device == null)
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
@@ -115,7 +114,7 @@ namespace ZKBiometricDLL
         {
             try
             {
-                var device = JsonConvert.DeserializeObject<DeviceInfo>(deviceJson);
+                var device = JsonSerializer.Deserialize<DeviceInfo>(deviceJson);
                 if (device == null)
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
@@ -143,7 +142,7 @@ namespace ZKBiometricDLL
                     IsEnabled = true
                 };
 
-                var json = JsonConvert.SerializeObject(device);
+                var json = JsonSerializer.Serialize(device);
                 return $"{{\"success\": true, \"device\": {json}}}";
             }
             catch (Exception ex)

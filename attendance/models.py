@@ -37,6 +37,7 @@ class AttendanceRecord(models.Model):
             models.Index(fields=['device_ip', 'punch_time']),
         ]
         ordering = ['-punch_time']
+        unique_together = ['employee', 'punch_time', 'device_ip']
     
     def __str__(self):
         return f"{self.employee.employee_id} - {self.punch_time}"

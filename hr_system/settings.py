@@ -138,5 +138,26 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# DLL Configuration
-DLL_PATH = BASE_DIR / 'TempDLL' / 'output' / 'ZKBiometricDLL.dll'
+# Celery Beat Schedule for automatic synchronization
+CELERY_BEAT_SCHEDULE = {
+    'sync-attendance-every-15-minutes': {
+        'task': 'devices.tasks.sync_all_devices_attendance',
+        'schedule': 900.0,  # 15 minutes in seconds
+        'options': {'expires': 300}  # Expire after 5 minutes
+    },
+    'sync-employees-daily': {
+        'task': 'devices.tasks.sync_all_devices_employees',
+        'schedule': 86400.0,  # 24 hours in seconds
+        'options': {'expires': 3600}  # Expire after 1 hour
+    },
+    'complete-sync-daily': {
+        'task': 'devices.tasks.sync_all_devices_complete',
+        'schedule': 86400.0,  # 24 hours in seconds
+        'options': {'expires': 7200}  # Expire after 2 hours
+    },
+    'regular-sync-hourly': {
+        'task': 'devices.tasks.sync_all_devices_regular',
+        'schedule': 3600.0,  # 1 hour in seconds
+        'options': {'expires': 1800}  # Expire after 30 minutes
+    }
+}

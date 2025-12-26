@@ -6,8 +6,11 @@
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
-
-
+  <ItemGroup>
+    <Compile Remove="ZKBiometricWrapper\**\*.cs" />
+  </ItemGroup>
 </Project>

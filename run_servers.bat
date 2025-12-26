@@ -5,7 +5,7 @@ echo.
 REM Activate virtual environment if it exists
 if exist "venv\Scripts\activate.bat" (
     echo Activating virtual environment...
-    call venv\Scripts\activate.bat
+    call venv\Scripts\activate
 ) else (
     echo Virtual environment not found. Using system Python.
 )
@@ -19,7 +19,7 @@ timeout /t 3 /nobreak >nul
 
 echo.
 echo Testing API connection...
-python -c "import requests; response = requests.post('http://localhost:5000/test-connection', json={'ip_address': '192.168.1.201', 'port': 4370}); print('API Test Result:', response.text)"
+python -c "import requests; response = requests.post('http://localhost:5004/test-connection', json={'ip_address': '172.16.10.39', 'port': 4370}); print('API Test Result:', response.text)"
 
 echo.
 echo Starting Django Development Server on port 8000...
@@ -30,7 +30,7 @@ python manage.py runserver 0.0.0.0:8000
 
 echo.
 echo Both servers should now be running:
-echo - FastAPI Device API: http://localhost:5000
+echo - FastAPI Device API: http://localhost:5004
 echo - Django Application: http://localhost:8000
 echo.
 echo Press any key to exit...

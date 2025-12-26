@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "dgSpecHash": "o2mKksHD91o=",
+  "success": false,
+  "projectFilePath": "E:\\api\\zk-api\\ZKBiometricService.Core\\ZKBiometricService.Core.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1100",
+      "level": "Error",
+      "message": "Unable to resolve 'System.IO.Ports (>= 8.0.0)' for 'net8.0'.",
+      "libraryId": "System.IO.Ports",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1100",
+      "level": "Error",
+      "message": "Unable to resolve 'Microsoft.Extensions.Logging.Abstractions (>= 8.0.0)' for 'net8.0'.",
+      "libraryId": "Microsoft.Extensions.Logging.Abstractions",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

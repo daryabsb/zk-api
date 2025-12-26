@@ -132,3 +132,87 @@ def sync_all_devices_complete():
         'attendance_sync': attendance_stats,
         'success': employee_stats.get('success') and attendance_stats.get('success')
     }
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=300)
+def sync_device_complete_from_225(self, device_id):
+    """Complete sync from date 225 for a specific device."""
+    try:
+        device = ZKDevice.objects.get(id=device_id)
+        service = get_api_service()
+        
+        # Sync all employees
+        employees_synced, emp_error = service.sync_employees(device, fetch_all=True)
+        if emp_error:
+            logger.error(f"Failed to sync employees from device {device.name}: {emp_error}")
+            raise self.retry(exc=Exception(emp_error))
+        
+        # Sync all attendance records from date 225
+        records_synced, att_error = service.sync_attendance(device, fetch_all_from_225=True)
+        if att_error:
+            logger.error(f"Failed to sync attendance from device {device.name}: {att_error}")
+            raise self.retry(exc=Exception(att_error))
+        
+        logger.info(f"Successfully synced {employees_synced} employees and {records_synced} records from {device.name}")
+        return {
+            'device_id': device_id,
+            'device_name': device.name,
+            'employees_synced': employees_synced,
+            'records_synced': records_synced,
+            'success': True
+        }
+        
+    except ZKDevice.DoesNotExist:
+        logger.error(f"Device with ID {device_id} not found")
+        return {'success': False, 'error': 'Device not found'}
+    except Exception as e:
+        logger.error(f"Error syncing device {device_id}: {str(e)}")
+        raise self.retry(exc=e)
+
+
+@shared_task
+def sync_all_devices_from_225():
+    """Sync all devices with complete data from date 225."""
+    devices = ZKDevice.objects.filter(is_active=True)
+    total_employees = 0
+    total_records = 0
+    
+    for device in devices:
+        try:
+            result = sync_device_complete_from_225.delay(device.id)
+            task_result = result.get(timeout=600)  # 10 minutes timeout per device
+            if task_result.get('success'):
+                total_employees += task_result.get('employees_synced', 0)
+                total_records += task_result.get('records_synced', 0)
+        except Exception as e:
+            logger.error(f"Error processing device {device.name}: {str(e)}")
+            continue
+    
+    return {
+        'success': True,
+        'total_employees_synced': total_employees,
+        'total_records_synced': total_records,
+        'devices_processed': devices.count()
+    }
+
+
+@shared_task
+def sync_all_devices_regular():
+    """Regular sync task for all active devices (runs every hour)."""
+    logger.info("Starting regular sync of all devices...")
+    
+    # Sync employees
+    employee_result = sync_all_devices_employees.delay()
+    employee_stats = employee_result.get(timeout=300)  # 5 minutes timeout
+    
+    # Sync attendance
+    attendance_result = sync_all_devices_attendance.delay()
+    attendance_stats = attendance_result.get(timeout=300)  # 5 minutes timeout
+    
+    logger.info(f"Regular sync completed: {employee_stats.get('total_employees_synced', 0)} employees, {attendance_stats.get('total_records_synced', 0)} records")
+    
+    return {
+        'employee_sync': employee_stats,
+        'attendance_sync': attendance_stats,
+        'success': employee_stats.get('success') and attendance_stats.get('success')
+    }

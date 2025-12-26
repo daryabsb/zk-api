@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
 from .models import ZKDevice
-from .services import ZKDeviceService
+from .api_services import get_api_service
 import json
 
 
@@ -77,7 +77,7 @@ def test_device_connection(request, device_id):
     """Test connection to a specific device."""
     try:
         device = ZKDevice.objects.get(id=device_id)
-        service = ZKDeviceService()
+        service = get_api_service()
         
         success, error = service.test_connection(device)
         
@@ -99,7 +99,7 @@ def sync_device_attendance(request, device_id):
     """Sync attendance records from a specific device."""
     try:
         device = ZKDevice.objects.get(id=device_id)
-        service = ZKDeviceService()
+        service = get_api_service()
         
         records_synced, error = service.sync_attendance(device)
         

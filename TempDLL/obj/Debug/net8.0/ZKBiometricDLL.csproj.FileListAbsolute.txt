@@ -1,0 +1,10 @@
+E:\api\zk-api\TempDLL\bin\Debug\net8.0\ZKBiometricDLL.deps.json
+E:\api\zk-api\TempDLL\bin\Debug\net8.0\ZKBiometricDLL.dll
+E:\api\zk-api\TempDLL\bin\Debug\net8.0\ZKBiometricDLL.pdb
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\ZKBiometricDLL.GeneratedMSBuildEditorConfig.editorconfig
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\ZKBiometricDLL.csproj.CoreCompileInputs.cache
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\ZKBiometricDLL.sourcelink.json
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\ZKBiometricDLL.dll
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\refint\ZKBiometricDLL.dll
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\ZKBiometricDLL.pdb
+E:\api\zk-api\TempDLL\obj\Debug\net8.0\ref\ZKBiometricDLL.dll

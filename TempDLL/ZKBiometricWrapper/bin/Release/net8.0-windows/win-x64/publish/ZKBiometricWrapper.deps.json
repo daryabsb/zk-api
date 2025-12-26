@@ -1,0 +1,40 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0/win-x64",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {},
+    ".NETCoreApp,Version=v8.0/win-x64": {
+      "ZKBiometricWrapper/1.0.0": {
+        "dependencies": {
+          "ZKBiometricDLL": "1.0.0"
+        },
+        "runtime": {
+          "ZKBiometricWrapper.dll": {}
+        }
+      },
+      "ZKBiometricDLL/1.0.0": {
+        "runtime": {
+          "ZKBiometricDLL.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ZKBiometricWrapper/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "ZKBiometricDLL/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

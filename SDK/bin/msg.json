@@ -1,0 +1,14 @@
+
+
+{ "command": "check_in",
+    "payload": {
+            "terminal_number": "27bc3ed1-df3b-41ae-b1b7-c4b5ccc33231",
+            "emp_code": "13",
+            "punch_time": "2023-7-15 8:41:21",
+            "verify_type": 4,
+            "punch_state": 0
+    }
+}
+
+
+

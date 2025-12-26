@@ -12,6 +12,7 @@ namespace ZKBiometricDLL.Services
         private TcpClient? _tcpClient;
         private NetworkStream? _networkStream;
         private readonly object _lock = new object();
+        public string? LastError { get; private set; }
 
         public ZKDeviceService()
         {
@@ -21,6 +22,7 @@ namespace ZKBiometricDLL.Services
         {
             try
             {
+                LastError = null;
                 lock (_lock)
                 {
                     _tcpClient?.Dispose();
@@ -34,6 +36,7 @@ namespace ZKBiometricDLL.Services
             }
             catch (Exception)
             {
+                LastError = "Failed to open TCP connection to device";
                 return false;
             }
         }
@@ -54,39 +57,21 @@ namespace ZKBiometricDLL.Services
         public async Task<List<AttendanceRecord>> GetAttendanceRecordsAsync(DeviceInfo device, DateTime startTime, DateTime endTime)
         {
             if (!await EnsureConnected(device))
+            {
+                if (LastError == null)
+                    LastError = "Device not reachable over TCP";
                 return new List<AttendanceRecord>();
+            }
 
             try
             {
-                // Simulate fetching records - in real implementation, this would communicate with the device
-                await Task.Delay(1000);
-                
-                var records = new List<AttendanceRecord>
-                {
-                    new AttendanceRecord
-                    {
-                        DeviceId = device.Id,
-                        EmployeeId = "1001",
-                        RecordTime = DateTime.Now.AddMinutes(-30),
-                        Type = "CheckIn",
-                        VerifyMode = 1,
-                        WorkCode = 0
-                    },
-                    new AttendanceRecord
-                    {
-                        DeviceId = device.Id,
-                        EmployeeId = "1002", 
-                        RecordTime = DateTime.Now.AddMinutes(-25),
-                        Type = "CheckIn",
-                        VerifyMode = 1,
-                        WorkCode = 0
-                    }
-                };
-                
+                var records = await GetAttendanceRecordsFromDeviceAsync(device, startTime, endTime);
                 return records;
             }
-            catch (Exception)
+            catch
             {
+                if (LastError == null)
+                    LastError = "Unexpected error while reading attendance records";
                 return new List<AttendanceRecord>();
             }
         }
@@ -94,34 +79,21 @@ namespace ZKBiometricDLL.Services
         public async Task<List<EmployeeInfo>> GetEmployeesAsync(DeviceInfo device)
         {
             if (!await EnsureConnected(device))
+            {
+                if (LastError == null)
+                    LastError = "Device not reachable over TCP";
                 return new List<EmployeeInfo>();
+            }
 
             try
             {
-                await Task.Delay(500);
-                
-                var employees = new List<EmployeeInfo>
-                {
-                    new EmployeeInfo
-                    {
-                        EmployeeId = "1001",
-                        Name = "John Doe",
-                        Department = "IT",
-                        Position = "Developer"
-                    },
-                    new EmployeeInfo
-                    {
-                        EmployeeId = "1002",
-                        Name = "Jane Smith", 
-                        Department = "HR",
-                        Position = "Manager"
-                    }
-                };
-                
+                var employees = await GetEmployeesFromDeviceAsync(device);
                 return employees;
             }
-            catch (Exception)
+            catch
             {
+                if (LastError == null)
+                    LastError = "Unexpected error while reading employees";
                 return new List<EmployeeInfo>();
             }
         }
@@ -178,6 +150,179 @@ namespace ZKBiometricDLL.Services
             }
         }
 
+        private Task<List<AttendanceRecord>> GetAttendanceRecordsFromDeviceAsync(DeviceInfo device, DateTime startTime, DateTime endTime)
+        {
+            return Task.Run(() =>
+            {
+                var records = new List<AttendanceRecord>();
+
+                try
+                {
+                    LastError = null;
+                    var comType = GetZkComType();
+                    if (comType == null)
+                    {
+                        LastError = "ZKTeco SDK (zkemkeeper) is not installed or not registered on this machine";
+                        return records;
+                    }
+
+                    dynamic zk = Activator.CreateInstance(comType);
+                    bool connected = zk.Connect_Net(device.IpAddress, device.Port);
+                    if (!connected)
+                    {
+                        LastError = "ZKTeco SDK Connect_Net failed for device";
+                        return records;
+                    }
+
+                    try
+                    {
+                        int machineNumber = 1;
+                        bool readOk = zk.ReadGeneralLogData(machineNumber);
+                        if (!readOk)
+                        {
+                            LastError = "ZKTeco SDK ReadGeneralLogData returned false (no logs or command failed)";
+                            return records;
+                        }
+
+                        string dwEnrollNumber = string.Empty;
+                        int dwVerifyMode = 0;
+                        int dwInOutMode = 0;
+                        int dwYear = 0;
+                        int dwMonth = 0;
+                        int dwDay = 0;
+                        int dwHour = 0;
+                        int dwMinute = 0;
+                        int dwSecond = 0;
+                        int dwWorkCode = 0;
+
+                        while (true)
+                        {
+                            bool hasData = zk.SSR_GetGeneralLogData(
+                                machineNumber,
+                                out dwEnrollNumber,
+                                out dwVerifyMode,
+                                out dwInOutMode,
+                                out dwYear,
+                                out dwMonth,
+                                out dwDay,
+                                out dwHour,
+                                out dwMinute,
+                                out dwSecond,
+                                ref dwWorkCode);
+
+                            if (!hasData)
+                                break;
+
+                            var recordTime = new DateTime(dwYear, dwMonth, dwDay, dwHour, dwMinute, dwSecond);
+                            if (recordTime < startTime || recordTime > endTime)
+                                continue;
+
+                            var record = new AttendanceRecord
+                            {
+                                DeviceId = device.Id,
+                                EmployeeId = dwEnrollNumber,
+                                RecordTime = recordTime,
+                                Type = dwInOutMode == 0 ? "CheckIn" : "CheckOut",
+                                VerifyMode = dwVerifyMode,
+                                WorkCode = dwWorkCode
+                            };
+
+                            records.Add(record);
+                        }
+                    }
+                    finally
+                    {
+                        zk.Disconnect();
+                    }
+                }
+                catch
+                {
+                    if (LastError == null)
+                        LastError = "Exception while talking to device via ZKTeco SDK";
+                    return records;
+                }
+
+                return records;
+            });
+        }
+
+        private Task<List<EmployeeInfo>> GetEmployeesFromDeviceAsync(DeviceInfo device)
+        {
+            return Task.Run(() =>
+            {
+                var employees = new List<EmployeeInfo>();
+
+                try
+                {
+                    LastError = null;
+                    var comType = GetZkComType();
+                    if (comType == null)
+                    {
+                        LastError = "ZKTeco SDK (zkemkeeper) is not installed or not registered on this machine";
+                        return employees;
+                    }
+
+                    dynamic zk = Activator.CreateInstance(comType);
+                    bool connected = zk.Connect_Net(device.IpAddress, device.Port);
+                    if (!connected)
+                    {
+                        LastError = "ZKTeco SDK Connect_Net failed for device";
+                        return employees;
+                    }
+
+                    try
+                    {
+                        int machineNumber = 1;
+                        zk.ReadAllUserID(machineNumber);
+
+                        string dwEnrollNumber = string.Empty;
+                        string name = string.Empty;
+                        string password = string.Empty;
+                        int privilege = 0;
+                        bool enabled = false;
+
+                        while (true)
+                        {
+                            bool hasUser = zk.SSR_GetAllUserInfo(
+                                machineNumber,
+                                out dwEnrollNumber,
+                                out name,
+                                out password,
+                                out privilege,
+                                out enabled);
+
+                            if (!hasUser)
+                                break;
+
+                            if (!enabled)
+                                continue;
+
+                            var employee = new EmployeeInfo
+                            {
+                                EmployeeId = dwEnrollNumber,
+                                Name = name,
+                                Department = string.Empty,
+                                Position = string.Empty,
+                                IsActive = true
+                            };
+
+                            employees.Add(employee);
+                        }
+                    }
+                    finally
+                    {
+                        zk.Disconnect();
+                    }
+                }
+                catch
+                {
+                    return employees;
+                }
+
+                return employees;
+            });
+        }
+
         public void Dispose()
         {
             lock (_lock)
@@ -185,6 +330,12 @@ namespace ZKBiometricDLL.Services
                 _networkStream?.Dispose();
                 _tcpClient?.Dispose();
             }
+        }
+
+        private Type? GetZkComType()
+        {
+            return Type.GetTypeFromProgID("zkemkeeper.CZKEM")
+                   ?? Type.GetTypeFromProgID("zkemkeeper.ZKEM");
         }
     }
 }

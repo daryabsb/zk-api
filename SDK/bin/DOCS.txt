@@ -1,0 +1,37 @@
+BioFetcher endpoints
+====================
+
+Fetch Device Info:
+	http://172.16.10.226:4000/info?ip=172.16.10.9&port=4370&key=0&depId=w1&areaId=1&deviceId=1
+
+Fetch Users:
+	http://172.16.10.226:4000/fetch-users?ip=172.16.10.9&port=4370&key=0&depId=w1&areaId=1&deviceId=1
+
+Fetch Logs:
+ http://172.16.10.226:4000/fetch-logs?ip=172.16.10.9&port=4370&key=0&depId=w1&areaId=1&deviceId=1&from=2023-07-15%2000:00:00&to=2023-07-22%2000:00:00
+
+Fetch Status:
+	http://172.16.10.226:4000/status?ip=172.16.10.9&port=4370&key=0&depId=w1&areaId=1&deviceId=1
+
+
+Development Procedure:
+======================
+
+Connect to the Websocket at:
+    ws://{{HOST}}:{{PORT}}/ws/biofetcher/{{AREA_ID}}/{DEVICE_ID}
+
+For example:
+    ws://172.16.10.118:8000/ws/biofetcher/1/1/
+
+
+Debugging endpoints
+===================
+
+Reboot device:
+	http://172.16.10.226:4000/reboot?ip=172.16.10.9&port=4370&key=0&depId=w1&areaId=1&deviceId=1
+
+Connect WS:
+	http://172.16.10.226:4000/connect-ws?address=ws://172.16.10.118:8000/ws/biofetcher/1/&areaId=1&deviceId=1
+
+Send WS Msg:
+	http://localhost:4000/send-msg?address=ws://172.16.10.118:8000/ws/biofetcher/1/&msg=Kwi%20bra

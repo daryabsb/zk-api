@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ZKBiometricService.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0d206806632600d2b29f73e5b84d13237607fd14")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5f7781f65e6f77be2ea4ba9961f1c3b483644fc8")]
 [assembly: System.Reflection.AssemblyProductAttribute("ZKBiometricService.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ZKBiometricService.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

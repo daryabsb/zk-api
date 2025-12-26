@@ -1,97 +1,175 @@
 """
-Services for ZK device operations using HTTP API instead of Python.NET.
-This avoids the .NET compatibility issues.
+Services for ZK device operations using an external HTTP API service.
+The external service is provided by the BioFetcher.exe SDK (HTTP server)
+and communicates with ZK biometric devices. Django talks to it over HTTP.
 """
 
 import requests
-import json
 from django.conf import settings
 from django.utils import timezone
 from .models import ZKDevice, DeviceSyncLog
 
 
 class ZKAPIService:
-    """Service class for ZK device operations using HTTP API."""
+    """
+    High-level service used by Django to interact with ZK devices.
+
+    It calls a separate HTTP service (BioFetcher) that exposes
+    simple HTTP endpoints and handles all communication with the devices.
+    """
     
     def __init__(self):
-        self.base_url = getattr(settings, 'ZK_API_URL', 'http://localhost:5000')
+        # Base URL of the BioFetcher HTTP service, e.g. http://localhost:4000
+        self.base_url = getattr(settings, "ZK_API_URL", "http://localhost:4000")
+    
+    def _request(self, path, params=None, timeout=60):
+        """
+        Helper to perform a GET request to the wrapper API and return JSON.
+        """
+        url = f"{self.base_url}{path}"
+        try:
+            response = requests.get(url, params=params or {}, timeout=timeout)
+            response.raise_for_status()
+            return response.json(), ""
+        except requests.exceptions.RequestException as e:
+            return None, f"API request failed: {str(e)}"
+        except ValueError as e:
+            return None, f"Invalid JSON response: {str(e)}"
     
     def test_connection(self, device):
-        """Test connection to a ZK device via API."""
-        try:
-            response = requests.post(
-                f"{self.base_url}/test-connection",
-                json={
-                    "ip_address": device.ip_address,
-                    "port": device.port,
-                    "serial_number": device.serial_number or "",
-                    "model": device.model or ""
-                },
-                timeout=30
-            )
-            response.raise_for_status()
-            result = response.json()
-            return result.get('success', False), result.get('message', '')
-            
-        except requests.exceptions.RequestException as e:
-            return False, f"API request failed: {str(e)}"
-        except Exception as e:
-            return False, f"Unexpected error: {str(e)}"
+        """
+        Test connection to a ZK device using the BioFetcher API.
+        """
+        params = {
+            "ip": str(device.ip_address),
+            "port": int(device.port),
+            "key": 0,
+            "depId": getattr(device, "department_id", "w1"),
+            "areaId": getattr(device, "area_id", 1),
+            "deviceId": getattr(device, "id", 1),
+        }
+        data, error = self._request("/status", params=params, timeout=15)
+        if error:
+            return False, error
+        
+        return bool(data.get("success")), data.get("error", "")
     
     def get_employees(self, device):
-        """Get employees from a ZK device via API."""
-        try:
-            response = requests.post(
-                f"{self.base_url}/get-employees",
-                json={
-                    "ip_address": device.ip_address,
-                    "port": device.port,
-                    "serial_number": device.serial_number or "",
-                    "model": device.model or ""
-                },
-                timeout=30
+        """
+        Get employees from a ZK device via BioFetcher API.
+
+        Returns a list of employee dicts and an error string (empty on success).
+        """
+        params = {
+            "ip": str(device.ip_address),
+            "port": int(device.port),
+            "key": 0,
+            "depId": getattr(device, "department_id", "w1"),
+            "areaId": getattr(device, "area_id", 1),
+            "deviceId": getattr(device, "id", 1),
+        }
+        data, error = self._request("/fetch-users", params=params, timeout=120)
+        if error:
+            return [], error
+        
+        if not data.get("success"):
+            return [], data.get("error", "Unknown error from wrapper API")
+        
+        employees = (
+            data.get("employees")
+            or data.get("users")
+            or data.get("data")
+            or []
+        )
+        
+        adapted = []
+        for emp in employees:
+            pin = (
+                emp.get("EmployeeId")
+                or emp.get("employee_id")
+                or emp.get("EmployeeID")
+                or emp.get("pin")
+                or emp.get("emp_code")
             )
-            response.raise_for_status()
-            result = response.json()
-            
-            if result.get('success'):
-                return result.get('employees', []), ""
-            else:
-                return [], result.get('error', 'Unknown error')
-                
-        except requests.exceptions.RequestException as e:
-            return [], f"API request failed: {str(e)}"
-        except Exception as e:
-            return [], f"Unexpected error: {str(e)}"
-    
-    def get_attendance_records(self, device, start_time, end_time):
-        """Get attendance records from device via API."""
-        try:
-            response = requests.post(
-                f"{self.base_url}/get-attendance",
-                json={
-                    "ip_address": device.ip_address,
-                    "port": device.port,
-                    "start_time": start_time.isoformat(),
-                    "end_time": end_time.isoformat()
-                },
-                timeout=30
+            adapted.append(
+                {
+                    "pin": pin,
+                    "name": emp.get("Name") or emp.get("name") or emp.get("full_name", ""),
+                    "department": emp.get("Department") or emp.get("department", ""),
+                    "position": emp.get("Position") or emp.get("position", ""),
+                }
             )
-            response.raise_for_status()
-            result = response.json()
-            
-            if result.get('success'):
-                return result.get('records', []), ""
-            else:
-                return [], result.get('error', 'Unknown error')
-                
-        except requests.exceptions.RequestException as e:
-            return [], f"API request failed: {str(e)}"
-        except Exception as e:
-            return [], f"Unexpected error: {str(e)}"
+        
+        return adapted, ""
     
-    def sync_employees(self, device):
-        """Sync employees from device to HR system."""
+    def get_attendance_records(self, device, start_time=None, end_time=None, all_records=False):
+        """
+        Get attendance records from device via wrapper API.
+
+        If start_time/end_time are not provided, use last_sync or a default
+        window (last 7 days) for normal sync, or a larger window when
+        all_records is True.
+        """
+        if not start_time or not end_time:
+            end_time = timezone.now()
+            if all_records:
+                start_time = end_time - timezone.timedelta(days=365)
+            else:
+                start_time = device.last_sync or (end_time - timezone.timedelta(days=7))
+        
+        params = {
+            "ip": str(device.ip_address),
+            "port": int(device.port),
+            "key": 0,
+            "depId": getattr(device, "department_id", "w1"),
+            "areaId": getattr(device, "area_id", 1),
+            "deviceId": getattr(device, "id", 1),
+            "from": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "to": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        
+        data, error = self._request("/fetch-logs", params=params, timeout=180)
+        if error:
+            return [], error
+        
+        if not data.get("success"):
+            return [], data.get("error", "Unknown error from wrapper API")
+        
+        raw_records = (
+            data.get("records")
+            or data.get("attendance")
+            or data.get("logs")
+            or data.get("data")
+            or []
+        )
+        
+        adapted_records = []
+        for r in raw_records:
+            employee_id = (
+                r.get("EmployeeID")
+                or r.get("EmployeeId")
+                or r.get("employee_id")
+                or r.get("emp_code")
+            )
+            punch_time = r.get("PunchTime") or r.get("punch_time")
+            device_id = r.get("DeviceID") or r.get("device_id") or getattr(device, "id", 0)
+            verify_mode = r.get("VerificationMode") or r.get("verify_type") or 0
+            status = r.get("Status") or r.get("punch_state") or 0
+            
+            adapted_records.append(
+                {
+                    "EmployeeID": employee_id,
+                    "PunchTime": punch_time,
+                    "DeviceID": device_id,
+                    "VerificationMode": verify_mode,
+                    "Status": status,
+                }
+            )
+        
+        return adapted_records, ""
+    
+    def sync_employees(self, device, fetch_all=False):
+        """Sync employees from device to HR system using wrapper API."""
         log = DeviceSyncLog(device=device, sync_type='employees')
         
         try:
@@ -121,13 +199,18 @@ class ZKAPIService:
                         }
                     )
                     
+                    # Get department from device data if available
+                    department = emp_data.get('department', 'Unknown')
+                    position = emp_data.get('position', 'Employee')
+                    
                     # Create or update employee
                     employee, created = Employee.objects.update_or_create(
                         employee_id=emp_data.get('pin'),
                         defaults={
                             'user': user,
-                            'department': 'Unknown',
-                            'position': 'Employee',
+                            'name': emp_data.get('name', ''),  # Save employee name from device
+                            'department': department,
+                            'position': position,
                             'hire_date': '2023-01-01'  # Default date
                         }
                     )
@@ -150,18 +233,23 @@ class ZKAPIService:
             log.save()
             return 0, str(e)
     
-    def sync_attendance(self, device):
-        """Sync attendance records from device."""
+    def sync_attendance(self, device, fetch_all_from_225=False):
+        """Sync attendance records from device using wrapper API."""
         log = DeviceSyncLog(device=device, sync_type='attendance')
         
         try:
             from django.utils import timezone
+            from datetime import datetime
             from attendance.models import AttendanceRecord, Employee
             
             end_time = timezone.now()
-            start_time = device.last_sync or (end_time - timezone.timedelta(days=7))
             
-            records, error = self.get_attendance_records(device, start_time, end_time)
+            if fetch_all_from_225:
+                start_time_225 = datetime(2024, 8, 13)
+                records, error = self.get_attendance_records(device, start_time_225, end_time)
+            else:
+                start_time = device.last_sync or (end_time - timezone.timedelta(days=7))
+                records, error = self.get_attendance_records(device, start_time, end_time)
             
             if error:
                 log.success = False

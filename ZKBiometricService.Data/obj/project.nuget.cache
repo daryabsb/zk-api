@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "dgSpecHash": "dtoNp2araUw=",
+  "success": false,
+  "projectFilePath": "E:\\api\\zk-api\\ZKBiometricService.Data\\ZKBiometricService.Data.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1100",
+      "level": "Error",
+      "message": "Unable to resolve 'Microsoft.EntityFrameworkCore (>= 8.0.0)' for 'net8.0'.",
+      "libraryId": "Microsoft.EntityFrameworkCore",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1100",
+      "level": "Error",
+      "message": "Unable to resolve 'Npgsql.EntityFrameworkCore.PostgreSQL (>= 8.0.0)' for 'net8.0'.",
+      "libraryId": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1100",
+      "level": "Error",
+      "message": "Unable to resolve 'Microsoft.EntityFrameworkCore.Design (>= 8.0.0)' for 'net8.0'.",
+      "libraryId": "Microsoft.EntityFrameworkCore.Design",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

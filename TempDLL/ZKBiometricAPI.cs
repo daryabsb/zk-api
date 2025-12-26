@@ -49,6 +49,14 @@ namespace ZKBiometricDLL
                 var start = DateTime.Parse(startTime);
                 var end = DateTime.Parse(endTime);
                 var records = _deviceService.GetAttendanceRecordsAsync(device, start, end).Result;
+
+                var concrete = _deviceService as ZKDeviceService;
+                if (concrete != null && !string.IsNullOrEmpty(concrete.LastError))
+                {
+                    var error = EscapeJsonString(concrete.LastError);
+                    return $"{{\"success\": false, \"error\": \"{error}\", \"records\": []}}";
+                }
+
                 var json = JsonSerializer.Serialize(records);
                 return $"{{\"success\": true, \"records\": {json}}}";
             }
@@ -67,6 +75,14 @@ namespace ZKBiometricDLL
                     return "{\"success\": false, \"error\": \"Invalid device JSON\"}";
 
                 var employees = _deviceService.GetEmployeesAsync(device).Result;
+
+                var concrete = _deviceService as ZKDeviceService;
+                if (concrete != null && !string.IsNullOrEmpty(concrete.LastError))
+                {
+                    var error = EscapeJsonString(concrete.LastError);
+                    return $"{{\"success\": false, \"error\": \"{error}\", \"employees\": []}}";
+                }
+
                 var json = JsonSerializer.Serialize(employees);
                 return $"{{\"success\": true, \"employees\": {json}}}";
             }

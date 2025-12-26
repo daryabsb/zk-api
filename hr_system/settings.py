@@ -161,3 +161,4 @@ CELERY_BEAT_SCHEDULE = {
         'options': {'expires': 1800}  # Expire after 30 minutes
     }
 }
+    

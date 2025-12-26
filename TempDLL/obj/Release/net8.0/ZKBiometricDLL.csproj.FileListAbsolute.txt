@@ -1,6 +1,4 @@
 E:\api\zk-api\TempDLL\obj\Release\net8.0\ZKBiometricDLL.GeneratedMSBuildEditorConfig.editorconfig
-E:\api\zk-api\TempDLL\obj\Release\net8.0\ZKBiometricDLL.AssemblyInfoInputs.cache
-E:\api\zk-api\TempDLL\obj\Release\net8.0\ZKBiometricDLL.AssemblyInfo.cs
 E:\api\zk-api\TempDLL\obj\Release\net8.0\ZKBiometricDLL.csproj.CoreCompileInputs.cache
 E:\api\zk-api\TempDLL\obj\Release\net8.0\ZKBiometricDLL.sourcelink.json
 E:\api\zk-api\TempDLL\bin\Release\net8.0\ZKBiometricDLL.deps.json

@@ -1,0 +1,5 @@
+{
+    "UseAutoPort": true,
+    "ManualPort": 5000,
+    "AutoStart": false
+}

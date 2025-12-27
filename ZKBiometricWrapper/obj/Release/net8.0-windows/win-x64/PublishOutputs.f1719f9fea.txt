@@ -1,0 +1,7 @@
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricWrapper.exe
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricWrapper.dll
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricWrapper.deps.json
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricWrapper.runtimeconfig.json
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricWrapper.pdb
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricDLL.dll
+E:\api\zk-api\TempDLL\ZKBiometricWrapper\bin\Release\net8.0-windows\win-x64\publish\ZKBiometricDLL.pdb
